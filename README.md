@@ -25,4 +25,9 @@ options:
   --no-gif              Skip GIF export
   
 
+
 Subfolder is created for output HTML and GIF files
+![Tyler-Foust-Wave](https://github.com/user-attachments/assets/591fef8e-eb94-46a7-a626-a8bf556dcde8)
+![LongwoodWarrenHants](https://github.com/user-attachments/assets/6bb4f262-08fe-4400-abfa-a2d073073681)
+![clear_from_in_Ultra](https://github.com/user-attachments/assets/785ae810-7173-4525-8c8a-5042c255de7c)
+
