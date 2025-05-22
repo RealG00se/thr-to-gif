@@ -93,12 +93,19 @@ def generate_svg_path(coords: List[Tuple[float, float]], svg_size: int) -> Tuple
     center_x = (min_x + max_x) / 2
     center_y = (min_y + max_y) / 2
     
-    # Scale and translate points
+    # Scale and translate points, rotating 90 degrees counterclockwise
     scaled_points = []
     for x, y in coords:
-        scaled_x = (x - center_x) * scale + svg_size / 2
-        scaled_y = (y - center_y) * scale + svg_size / 2
-        scaled_points.append((scaled_x, scaled_y))
+        # First center and scale
+        centered_x = (x - center_x) * scale
+        centered_y = (y - center_y) * scale
+        # Then rotate 90 degrees counterclockwise (x,y) -> (y,-x)
+        rotated_x = centered_y
+        rotated_y = -centered_x
+        # Finally translate to center of SVG
+        final_x = rotated_x + svg_size / 2
+        final_y = rotated_y + svg_size / 2
+        scaled_points.append((final_x, final_y))
     
     # Generate path data
     if not scaled_points:

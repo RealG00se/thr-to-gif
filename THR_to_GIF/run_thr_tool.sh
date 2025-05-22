@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Get the directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # Resolve absolute path using Python (portable, no external deps)
 resolve_path() {
   python3 -c "import os,sys; print(os.path.abspath(sys.argv[1]))" "$1"
@@ -13,7 +16,8 @@ if [[ -z "$INPUT" || -z "$DURATION" ]]; then
   exit 1
 fi
 
-SCRIPT="gif/thr_to_gif.py"
+# Use the script directory to find thr_to_gif.py
+SCRIPT="$SCRIPT_DIR/thr_to_gif.py"
 
 if [[ -d "$INPUT" ]]; then
   echo "📂 Batch processing folder: $INPUT"

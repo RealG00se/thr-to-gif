@@ -134,7 +134,13 @@ async function captureFrame(page, frameIndex) {
                 throw new Error('SVG element not found');
             }
             const rect = svg.getBoundingClientRect();
-            return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+            // Since the SVG is rotated, we need to swap width and height
+            return { 
+                x: rect.left, 
+                y: rect.top, 
+                width: rect.height, 
+                height: rect.width 
+            };
         });
 
         const filePath = `${tempDir}/frame_${String(frameIndex).padStart(4, '0')}.png`;
@@ -223,7 +229,13 @@ async function capturePreviewImage(htmlPath, outputPngPath, finalTime) {
                 throw new Error('SVG element not found');
             }
             const rect = svg.getBoundingClientRect();
-            return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+            // Since the SVG is rotated, we need to swap width and height
+            return { 
+                x: rect.left, 
+                y: rect.top, 
+                width: rect.height, 
+                height: rect.width 
+            };
         });
 
         await page.screenshot({ path: outputPngPath, clip });
