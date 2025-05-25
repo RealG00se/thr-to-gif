@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sand Table Animation</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    svg {
+      max-width: 90vw;
+      max-height: 90vh;
+    }
+    .controls {
+      margin-top: 1em;
+      display: flex;
+      gap: 1em;
+      align-items: center;
+    }
+    input, button {
+      background-color: #222;
+      color: white;
+      border: 1px solid #555;
+      padding: 0.4em 0.8em;
+      font-size: 1em;
+    }
+    input[type="range"] {
+      width: 300px;
+    }
+    .time-input {
+      display: flex;
+      align-items: center;
+      gap: 0.2em;
+    }
+    .time-input input {
+      width: 40px;
+      text-align: center;
+      font-family: monospace;
+    }
+    .time-input span {
+      font-family: monospace;
+    }
+    .time-display {
+      font-family: monospace;
+      min-width: 80px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <svg id="svg" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 460.07 101.44 L 463.62 100.00 L 467.99 104.66 L 472.37 109.32 L 476.74 113.97 L 481.11 118.63 L 485.48 123.29 L 489.86 127.95 L 494.23 132.61 L 498.60 137.27 L 502.97 141.92 L 507.35 146.58 L 511.72 151.24 L 516.09 155.90 L 520.46 160.56 L 524.83 165.21 L 529.21 169.87 L 533.58 174.53 L 537.95 179.19 L 539.93 181.29 L 539.93 178.10 L 535.50 182.71 L 531.07 187.31 L 526.65 191.92 L 522.21 196.52 L 517.79 201.13 L 513.36 205.73 L 508.93 210.33 L 504.50 214.94 L 500.07 219.54 L 495.65 224.15 L 491.22 228.76 L 486.79 233.36 L 482.36 237.96 L 477.94 242.57 L 473.51 247.17 L 469.08 251.78 L 464.65 256.39 L 460.22 260.99 L 460.07 261.15 L 460.07 257.96 L 464.50 262.56 L 468.93 267.17 L 473.36 271.77 L 477.78 276.38 L 482.21 280.98 L 486.64 285.59 L 491.07 290.19 L 495.49 294.79 L 499.92 299.40 L 504.35 304.01 L 508.78 308.61 L 513.21 313.22 L 517.63 317.82 L 522.06 322.43 L 526.49 327.03 L 530.92 331.64 L 535.34 336.24 L 539.77 340.85 L 539.93 341.01 L 539.93 337.81 L 535.50 342.41 L 531.07 347.02 L 526.64 351.63 L 522.22 356.23 L 517.79 360.84 L 513.36 365.44 L 508.93 370.05 L 504.51 374.65 L 500.08 379.26 L 495.65 383.86 L 491.22 388.46 L 486.79 393.07 L 482.36 397.68 L 477.94 402.28 L 473.51 406.89 L 469.08 411.49 L 464.65 416.10 L 460.22 420.70 L 460.07 420.86 L 460.07 417.67 L 464.50 422.27 L 468.93 426.87 L 473.35 431.48 L 477.78 436.09 L 482.21 440.70 L 486.64 445.30 L 491.07 449.90 L 495.49 454.51 L 499.92 459.11 L 504.35 463.72 L 508.78 468.32 L 513.21 472.92 L 517.63 477.53 L 522.06 482.14 L 526.49 486.75 L 530.92 491.35 L 535.34 495.96 L 539.77 500.56 L 539.93 500.72 L 539.93 497.52 L 535.50 502.13 L 531.07 506.73 L 526.64 511.34 L 522.21 515.95 L 517.79 520.55 L 513.36 525.15 L 508.93 529.76 L 504.50 534.36 L 500.08 538.97 L 495.65 543.58 L 491.22 548.18 L 486.79 552.79 L 482.36 557.39 L 477.94 562.00 L 473.51 566.60 L 469.08 571.20 L 464.65 575.81 L 460.23 580.41 L 460.07 580.57 L 460.07 577.38 L 464.50 581.98 L 468.93 586.59 L 473.35 591.20 L 477.78 595.80 L 482.21 600.41 L 486.64 605.01 L 491.07 609.62 L 495.49 614.22 L 499.92 618.83 L 504.35 623.43 L 508.78 628.04 L 513.20 632.64 L 517.63 637.25 L 522.06 641.85 L 526.49 646.46 L 530.92 651.06 L 535.35 655.67 L 539.78 660.27 L 539.93 660.43 L 539.93 657.24 L 535.50 661.84 L 531.07 666.45 L 526.64 671.06 L 522.21 675.66 L 517.79 680.26 L 513.36 684.87 L 508.93 689.47 L 504.50 694.08 L 500.08 698.69 L 495.65 703.29 L 491.22 707.89 L 486.79 712.50 L 482.36 717.10 L 477.94 721.71 L 473.51 726.31 L 469.08 730.92 L 464.65 735.52 L 460.23 740.13 L 460.07 740.29 L 460.07 737.09 L 464.50 741.70 L 468.93 746.30 L 473.36 750.91 L 477.78 755.52 L 482.21 760.12 L 486.64 764.73 L 491.07 769.33 L 495.49 773.93 L 499.93 778.54 L 504.35 783.15 L 508.78 787.74 L 513.20 792.35 L 517.63 796.96 L 522.06 801.56 L 526.49 806.17 L 530.91 810.78 L 535.34 815.38 L 539.78 819.98 L 539.92 820.15 L 539.92 816.95 L 535.50 821.55 L 531.07 826.16 L 526.64 830.77 L 522.22 835.37 L 517.79 839.97 L 513.36 844.58 L 508.93 849.18 L 504.51 853.79 L 500.08 858.39 L 495.65 863.00 L 491.22 867.61 L 486.79 872.21 L 482.36 876.82 L 477.94 881.42 L 473.51 886.02 L 469.08 890.63 L 464.65 895.24 L 460.22 899.84 L 460.07 900.00 L 460.07 896.81 L 460.07 900.00" fill="none" stroke="#444" stroke-width="1" />
+    <path id="animatedPath" d="M 460.07 101.44 L 463.62 100.00 L 467.99 104.66 L 472.37 109.32 L 476.74 113.97 L 481.11 118.63 L 485.48 123.29 L 489.86 127.95 L 494.23 132.61 L 498.60 137.27 L 502.97 141.92 L 507.35 146.58 L 511.72 151.24 L 516.09 155.90 L 520.46 160.56 L 524.83 165.21 L 529.21 169.87 L 533.58 174.53 L 537.95 179.19 L 539.93 181.29 L 539.93 178.10 L 535.50 182.71 L 531.07 187.31 L 526.65 191.92 L 522.21 196.52 L 517.79 201.13 L 513.36 205.73 L 508.93 210.33 L 504.50 214.94 L 500.07 219.54 L 495.65 224.15 L 491.22 228.76 L 486.79 233.36 L 482.36 237.96 L 477.94 242.57 L 473.51 247.17 L 469.08 251.78 L 464.65 256.39 L 460.22 260.99 L 460.07 261.15 L 460.07 257.96 L 464.50 262.56 L 468.93 267.17 L 473.36 271.77 L 477.78 276.38 L 482.21 280.98 L 486.64 285.59 L 491.07 290.19 L 495.49 294.79 L 499.92 299.40 L 504.35 304.01 L 508.78 308.61 L 513.21 313.22 L 517.63 317.82 L 522.06 322.43 L 526.49 327.03 L 530.92 331.64 L 535.34 336.24 L 539.77 340.85 L 539.93 341.01 L 539.93 337.81 L 535.50 342.41 L 531.07 347.02 L 526.64 351.63 L 522.22 356.23 L 517.79 360.84 L 513.36 365.44 L 508.93 370.05 L 504.51 374.65 L 500.08 379.26 L 495.65 383.86 L 491.22 388.46 L 486.79 393.07 L 482.36 397.68 L 477.94 402.28 L 473.51 406.89 L 469.08 411.49 L 464.65 416.10 L 460.22 420.70 L 460.07 420.86 L 460.07 417.67 L 464.50 422.27 L 468.93 426.87 L 473.35 431.48 L 477.78 436.09 L 482.21 440.70 L 486.64 445.30 L 491.07 449.90 L 495.49 454.51 L 499.92 459.11 L 504.35 463.72 L 508.78 468.32 L 513.21 472.92 L 517.63 477.53 L 522.06 482.14 L 526.49 486.75 L 530.92 491.35 L 535.34 495.96 L 539.77 500.56 L 539.93 500.72 L 539.93 497.52 L 535.50 502.13 L 531.07 506.73 L 526.64 511.34 L 522.21 515.95 L 517.79 520.55 L 513.36 525.15 L 508.93 529.76 L 504.50 534.36 L 500.08 538.97 L 495.65 543.58 L 491.22 548.18 L 486.79 552.79 L 482.36 557.39 L 477.94 562.00 L 473.51 566.60 L 469.08 571.20 L 464.65 575.81 L 460.23 580.41 L 460.07 580.57 L 460.07 577.38 L 464.50 581.98 L 468.93 586.59 L 473.35 591.20 L 477.78 595.80 L 482.21 600.41 L 486.64 605.01 L 491.07 609.62 L 495.49 614.22 L 499.92 618.83 L 504.35 623.43 L 508.78 628.04 L 513.20 632.64 L 517.63 637.25 L 522.06 641.85 L 526.49 646.46 L 530.92 651.06 L 535.35 655.67 L 539.78 660.27 L 539.93 660.43 L 539.93 657.24 L 535.50 661.84 L 531.07 666.45 L 526.64 671.06 L 522.21 675.66 L 517.79 680.26 L 513.36 684.87 L 508.93 689.47 L 504.50 694.08 L 500.08 698.69 L 495.65 703.29 L 491.22 707.89 L 486.79 712.50 L 482.36 717.10 L 477.94 721.71 L 473.51 726.31 L 469.08 730.92 L 464.65 735.52 L 460.23 740.13 L 460.07 740.29 L 460.07 737.09 L 464.50 741.70 L 468.93 746.30 L 473.36 750.91 L 477.78 755.52 L 482.21 760.12 L 486.64 764.73 L 491.07 769.33 L 495.49 773.93 L 499.93 778.54 L 504.35 783.15 L 508.78 787.74 L 513.20 792.35 L 517.63 796.96 L 522.06 801.56 L 526.49 806.17 L 530.91 810.78 L 535.34 815.38 L 539.78 819.98 L 539.92 820.15 L 539.92 816.95 L 535.50 821.55 L 531.07 826.16 L 526.64 830.77 L 522.22 835.37 L 517.79 839.97 L 513.36 844.58 L 508.93 849.18 L 504.51 853.79 L 500.08 858.39 L 495.65 863.00 L 491.22 867.61 L 486.79 872.21 L 482.36 876.82 L 477.94 881.42 L 473.51 886.02 L 469.08 890.63 L 464.65 895.24 L 460.22 899.84 L 460.07 900.00 L 460.07 896.81 L 460.07 900.00" fill="none" stroke="white" stroke-width="1"
+          stroke-dasharray="1187.38" stroke-dashoffset="1187.38" />
+  </svg>
+  <div class="controls">
+    Duration:
+    <div class="time-input">
+      <input type="number" id="hours" min="0" max="23" value="0" onchange="updateDuration()">
+      <span>:</span>
+      <input type="number" id="minutes" min="0" max="59" value="0" onchange="updateDuration()">
+      <span>:</span>
+      <input type="number" id="seconds" min="0" max="59" value="15" onchange="updateDuration()">
+    </div>
+    <button id="playPauseBtn">▶️</button>
+    <button id="restartBtn">⟲</button>
+    <input id="scrubber" type="range" min="0" max="15.0" step="0.01" value="0">
+    <span id="timeDisplay" class="time-display">00:00:00</span>
+  </div>
+  <script>
+    const path = document.getElementById("animatedPath");
+    const scrubber = document.getElementById("scrubber");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const hoursInput = document.getElementById("hours");
+    const minutesInput = document.getElementById("minutes");
+    const secondsInput = document.getElementById("seconds");
+    const timeDisplay = document.getElementById("timeDisplay");
+
+    let duration = parseFloat(secondsInput.value);
+    let pathLength = parseFloat(path.getAttribute("stroke-dasharray"));
+    let playing = false;
+    let startTime = null;
+    let pausedAt = 0;
+    let rafId = null;
+
+    function formatTime(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function parseTimeInput() {
+      const hours = parseInt(hoursInput.value) || 0;
+      const minutes = parseInt(minutesInput.value) || 0;
+      const seconds = parseInt(secondsInput.value) || 0;
+      return hours * 3600 + minutes * 60 + seconds;
+    }
+
+    function updateDuration() {
+      const newDuration = parseTimeInput();
+      if (newDuration > 0) {
+        duration = newDuration;
+        scrubber.max = duration;
+        if (playing) {
+          pause();
+          pausedAt = 0;
+          setTime(0);
+          play();
+        }
+      }
+    }
+
+    function setTime(t) {
+      const offset = pathLength * (1 - t / duration);
+      path.setAttribute("stroke-dashoffset", offset);
+      scrubber.value = t.toFixed(2);
+      timeDisplay.textContent = formatTime(t);
+    }
+
+    function animate(timestamp) {
+      if (!startTime) startTime = timestamp;
+      const elapsed = (timestamp - startTime) / 1000;
+      const currentTime = Math.min(pausedAt + elapsed, duration);
+      setTime(currentTime);
+      if (currentTime < duration) {
+        rafId = requestAnimationFrame(animate);
+      } else {
+        playing = false;
+        pausedAt = 0;
+        playPauseBtn.textContent = "▶️";
+      }
+    }
+
+    function play() {
+      if (!playing) {
+        playing = true;
+        playPauseBtn.textContent = "⏸";
+        startTime = null;
+        rafId = requestAnimationFrame(animate);
+      }
+    }
+
+    function pause() {
+      if (playing) {
+        cancelAnimationFrame(rafId);
+        pausedAt = parseFloat(scrubber.value);
+        playPauseBtn.textContent = "▶️";
+        playing = false;
+      }
+    }
+
+    function togglePlayPause() {
+      if (playing) {
+        pause();
+      } else {
+        startTime = null;
+        play();
+      }
+    }
+
+    function restart() {
+      cancelAnimationFrame(rafId);
+      playing = false;
+      pausedAt = 0;
+      setTime(0);
+      play();
+    }
+
+    playPauseBtn.addEventListener("click", togglePlayPause);
+    restartBtn.addEventListener("click", restart);
+
+    scrubber.addEventListener("input", () => {
+      pause();
+      pausedAt = parseFloat(scrubber.value);
+      setTime(pausedAt);
+    });
+
+    setTime(0);
+  </script>
+</body>
+</html>
