@@ -8,13 +8,14 @@ from xml.dom import minidom
 import shutil
 from typing import List, Tuple, Optional
 import logging
+from artifact_remover import process_thr_file
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('thr_converter.log'),
+        logging.FileHandler('thr_converter.log', mode='w'),  # Use 'w' mode to overwrite the file each time
         logging.StreamHandler()
     ]
 )
@@ -71,8 +72,8 @@ def parse_thr_file(filename: str) -> List[Tuple[float, float]]:
     
     return coords
 
-def generate_svg_path(coords: List[Tuple[float, float]], svg_size: int) -> Tuple[str, List[Tuple[float, float]]]:
-    """Generate SVG path data from coordinates and scale to fit SVG size."""
+def generate_svg_path(coords: List[Tuple[float, float]], svg_size: int, rotation_deg: float = 0.0) -> Tuple[str, List[Tuple[float, float]]]:
+    """Generate SVG path data from coordinates and scale to fit SVG size, with optional rotation in degrees."""
     if not coords:
         return "", []
     
@@ -93,16 +94,21 @@ def generate_svg_path(coords: List[Tuple[float, float]], svg_size: int) -> Tuple
     center_x = (min_x + max_x) / 2
     center_y = (min_y + max_y) / 2
     
-    # Scale and translate points, rotating 90 degrees counterclockwise
+    # Convert rotation to radians
+    rotation_rad = math.radians(rotation_deg)
+    cos_r = math.cos(rotation_rad)
+    sin_r = math.sin(rotation_rad)
+    
+    # Scale, center, and rotate points
     scaled_points = []
     for x, y in coords:
-        # First center and scale
+        # Center and scale
         centered_x = (x - center_x) * scale
         centered_y = (y - center_y) * scale
-        # Then rotate 90 degrees counterclockwise (x,y) -> (y,-x)
-        rotated_x = centered_y
-        rotated_y = -centered_x
-        # Finally translate to center of SVG
+        # Apply rotation
+        rotated_x = centered_x * cos_r - centered_y * sin_r
+        rotated_y = centered_x * sin_r + centered_y * cos_r
+        # Translate to center of SVG
         final_x = rotated_x + svg_size / 2
         final_y = rotated_y + svg_size / 2
         scaled_points.append((final_x, final_y))
@@ -148,8 +154,8 @@ def check_dependencies() -> None:
         logging.error(f"Missing required dependencies: {', '.join(missing_deps)}")
         raise RuntimeError(f"Missing required dependencies: {', '.join(missing_deps)}")
 
-def run_capture(html_file: str, output_gif: str, duration: float) -> None:
-    """Run the capture process to create GIF."""
+def run_capture(html_file: str, output_gif: Optional[str], duration: float, no_png: bool = False) -> None:
+    """Run the capture process to create GIF and/or PNG."""
     try:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         capture_path = os.path.join(script_dir, 'capture.js')
@@ -157,18 +163,43 @@ def run_capture(html_file: str, output_gif: str, duration: float) -> None:
         if not os.path.isfile(capture_path):
             raise FileNotFoundError("capture.js not found")
         
-        cmd = ['node', capture_path, html_file, output_gif, str(duration)]
-        subprocess.run(cmd, check=True)
+        # Construct command based on whether we want GIF output
+        if output_gif is not None:  # Explicitly check for None
+            cmd = ['node', capture_path, html_file, output_gif, str(duration)]
+            if no_png:
+                cmd.append('--no-png')
+            print(f"\n🎬 Starting GIF generation for: {os.path.basename(html_file)}")
+            print(f"   Duration: {duration}s | Output: {os.path.basename(output_gif)}")
+        else:
+            # PNG-only mode: use a special marker value
+            cmd = ['node', capture_path, html_file, 'NO_GIF', str(duration)]
+            print(f"\n📸 Creating PNG preview for: {os.path.basename(html_file)}")
+            
+        # Log the command for debugging
+        print(f"\n🔍 PYTHON: Running command: {' '.join(cmd)}")
+        
+        # Run the command with real-time output (don't capture stdout so progress bars show)
+        # but capture stderr for error handling
+        result = subprocess.run(cmd, check=True, stderr=subprocess.PIPE, text=True)
+        
+        # Print any error output from capture.js
+        if result.stderr:
+            print("\n🔍 CAPTURE.JS STATUS:")
+            print(result.stderr)
+            
     except subprocess.CalledProcessError as e:
-        logging.error(f"Error running capture.js: {e}")
+        print(f"\n❌ Error running capture.js: {e}")
+        if e.stderr:
+            print("\n🔍 CAPTURE.JS ERRORS:")
+            print(e.stderr)
         raise
     except Exception as e:
-        logging.error(f"Unexpected error during capture: {e}")
+        print(f"\n❌ Unexpected error during capture: {e}")
         raise
 
-def write_html(coords: List[Tuple[float, float]], output_file: str, svg_size: int = 1000, duration: float = 10.0) -> None:
+def write_html(coords: List[Tuple[float, float]], output_file: str, svg_size: int = 1000, duration: float = 10.0, rotation_deg: float = 0.0) -> None:
     """Write HTML animation file with SVG path."""
-    path_data, points = generate_svg_path(coords, svg_size)
+    path_data, points = generate_svg_path(coords, svg_size, rotation_deg)
     path_length = calculate_path_length(points)
     
     html_content = f"""<!DOCTYPE html>
@@ -366,71 +397,160 @@ def write_html(coords: List[Tuple[float, float]], output_file: str, svg_size: in
     with open(output_file, 'w') as f:
         f.write(html_content)
 
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Convert .thr file(s) to animated HTML and export as GIF"
-    )
-    parser.add_argument('thr_files', nargs='+', help="Input .thr file(s)")
-    parser.add_argument('-o', '--output', help="Output HTML filename (default: based on first .thr)")
-    parser.add_argument('-g', '--gif', help="Output GIF filename (default: based on first .thr)")
-    parser.add_argument('-d', '--duration', type=float, default=10.0, help="Animation duration in seconds")
-    parser.add_argument('--size', type=int, default=1000, help="Canvas size (default 1000x1000)")
-    parser.add_argument('--no-gif', action='store_true', help="Skip GIF export")
-    parser.add_argument('--log-level', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO',
-                      help="Set the logging level")
+def write_svg(coords: List[Tuple[float, float]], output_file: str, svg_size: int = 1000, rotation_deg: float = 0.0) -> None:
+    """Write standalone SVG file with the path."""
+    path_data, _ = generate_svg_path(coords, svg_size, rotation_deg)
+    
+    svg_content = f"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="{svg_size}" height="{svg_size}" viewBox="0 0 {svg_size} {svg_size}" xmlns="http://www.w3.org/2000/svg">
+    <path d="{path_data}" fill="none" stroke="black" stroke-width="1" />
+</svg>"""
 
+    with open(output_file, 'w') as f:
+        f.write(svg_content)
+
+def cleanup_temp_files():
+    """Clean up any temporary files that might have been left behind."""
+    try:
+        # Clean up any frames directories
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        for item in os.listdir(current_dir):
+            if item.startswith('frames_'):
+                full_path = os.path.join(current_dir, item)
+                if os.path.isdir(full_path):
+                    shutil.rmtree(full_path, ignore_errors=True)
+                    logging.info(f"Cleaned up temporary directory: {item}")
+        # Clean up palette file
+        palette_file = os.path.join(current_dir, 'palette.png')
+        if os.path.exists(palette_file):
+            os.remove(palette_file)
+            logging.info("Cleaned up palette file")
+    except Exception as e:
+        logging.error(f"Error during cleanup: {e}")
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description='Convert THR file to GIF animation')
+    parser.add_argument('input_file', help='Input THR or HTML file')
+    parser.add_argument('-d', '--duration', type=float, default=10.0,
+                      help='Animation duration in seconds (default: 10.0)')
+    parser.add_argument('-s', '--size', type=int, default=1000,
+                      help='SVG size in pixels (default: 1000)')
+    parser.add_argument('-r', '--rotation', type=float, default=0.0,
+                      help='Rotation in degrees (default: 0)')
+    parser.add_argument('--no-gif', action='store_true',
+                      help='Skip GIF generation, only create HTML and PNG')
+    parser.add_argument('--no-svg', action='store_true',
+                      help='Skip SVG generation')
+    parser.add_argument('--no-html', action='store_true',
+                      help='Skip HTML animation generation')
+    parser.add_argument('--no-png', action='store_true',
+                      help='Skip PNG preview generation (also skips GIF)')
+    parser.add_argument('--html-to-gif', action='store_true',
+                      help='Process existing HTML files to generate GIFs')
     args = parser.parse_args()
-    logging.getLogger().setLevel(args.log_level)
 
     try:
-        if not args.thr_files:
-            raise ValueError("At least one .thr file is required")
+        # Log the arguments for debugging
+        logging.info(f"🔍 DEBUG: Arguments: no_gif={args.no_gif}, no_svg={args.no_svg}, no_html={args.no_html}, no_png={args.no_png}, html_to_gif={args.html_to_gif}")
 
-        # Validate input files
-        for f in args.thr_files:
-            if not os.path.isfile(f):
-                raise FileNotFoundError(f"File '{f}' not found")
-            if not f.lower().endswith('.thr'):
-                logging.warning(f"File '{f}' does not have .thr extension")
+        if args.html_to_gif:
+            # HTML-to-GIF mode: process existing HTML file
+            if not args.input_file.endswith('.html'):
+                logging.error("In --html-to-gif mode, input file must be an HTML file")
+                sys.exit(1)
+            
+            if not os.path.exists(args.input_file):
+                logging.error(f"HTML file not found: {args.input_file}")
+                sys.exit(1)
+            
+            print(f"\n🔄 Processing HTML file: {os.path.basename(args.input_file)}")
+            
+            # Use the HTML file directly
+            html_file = args.input_file
+            base_name = os.path.splitext(os.path.basename(html_file))[0]
+            output_dir = os.path.dirname(html_file)
+            
+            # Generate output files in the same directory as the HTML file
+            gif_file = None if args.no_gif else os.path.join(output_dir, f"{base_name}.gif")
+            png_file = os.path.join(output_dir, f"{base_name}.png")
+            
+            # Log the file paths for debugging
+            logging.info(f"🔍 DEBUG: HTML-to-GIF mode - html={html_file}, gif={gif_file}, png={png_file}")
+            
+            # Run capture process if we need either GIF or PNG
+            if gif_file is not None or not args.no_png:
+                run_capture(html_file, gif_file, args.duration, args.no_png)
+                if not args.no_png:
+                    print(f"✅ Created PNG preview: {os.path.basename(png_file)}")
+                if gif_file is not None:
+                    print(f"✅ Created GIF animation: {os.path.basename(gif_file)}")
+            else:
+                print("⚠️  Both GIF and PNG generation disabled - nothing to do")
+            
+            print("🎉 HTML-to-GIF conversion completed successfully!")
+        
+        else:
+            # Normal THR-to-outputs mode
+            if not args.input_file.endswith('.thr'):
+                logging.error("In normal mode, input file must be a THR file")
+                sys.exit(1)
+            
+            print(f"\n🔄 Processing THR file: {os.path.basename(args.input_file)}")
+            
+            # Create output directory
+            base_name = os.path.splitext(os.path.basename(args.input_file))[0]
+            output_dir = os.path.join(os.path.dirname(args.input_file), base_name)
+            ensure_dir_exists(output_dir)
 
-        # Validate duration
-        if args.duration <= 0:
-            raise ValueError("Duration must be positive")
-        if args.duration > 43200:  # 12 hours
-            logging.warning("Duration exceeds 12 hours, this may cause performance issues")
+            # Process the THR file to remove circle artifacts
+            print("🔧 Step 1/5: Processing THR file and removing artifacts...")
+            artifact_removed_thr = os.path.join(output_dir, f"{base_name}.thr")
+            process_thr_file(args.input_file, artifact_removed_thr)
+            logging.info(f"Created artifact-removed THR file: {artifact_removed_thr}")
 
-        # Validate canvas size
-        if args.size <= 0:
-            raise ValueError("Canvas size must be positive")
-        if args.size > 4096:
-            logging.warning("Large canvas size may cause performance issues")
+            # Parse the cleaned THR file
+            print("📊 Step 2/5: Parsing coordinates...")
+            coords = parse_thr_file(artifact_removed_thr)
 
-        all_coords = []
-        for f in args.thr_files:
-            coords = parse_thr_file(f)
-            all_coords.extend(coords)
+            # Generate output files
+            html_file = os.path.join(output_dir, f"{base_name}.html")
+            gif_file = None if args.no_gif else os.path.join(output_dir, f"{base_name}.gif")
+            png_file = os.path.join(output_dir, f"{base_name}.png")
+            svg_file = os.path.join(output_dir, f"{base_name}.svg")
 
-        # Get the directory of the first THR file
-        first_thr_dir = os.path.dirname(os.path.abspath(args.thr_files[0]))
-        base_name = os.path.splitext(os.path.basename(args.thr_files[0]))[0]
-        output_dir = os.path.join(first_thr_dir, base_name)
-        ensure_dir_exists(output_dir)
+            # Log the file paths for debugging
+            logging.info(f"🔍 DEBUG: Output files: html={html_file}, gif={gif_file}, png={png_file}, svg={svg_file}")
 
-        html_name = args.output if args.output else os.path.join(output_dir, f"{base_name}.html")
-        gif_name = args.gif if args.gif else os.path.join(output_dir, f"{base_name}.gif")
+            # Write HTML animation (pass rotation)
+            if not args.no_html:
+                print("📝 Step 3/5: Generating HTML animation...")
+                write_html(coords, html_file, args.size, args.duration, args.rotation)
+                print(f"✅ Created HTML animation: {os.path.basename(html_file)}")
 
-        write_html(all_coords, html_name, args.size, args.duration)
-        logging.info(f"HTML animation saved to {html_name}")
+            # Write SVG file if not disabled
+            if not args.no_svg:
+                print("🎨 Step 4/5: Generating SVG file...")
+                write_svg(coords, svg_file, args.size, args.rotation)
+                print(f"✅ Created SVG file: {os.path.basename(svg_file)}")
 
-        if not args.no_gif:
-            check_dependencies()
-            logging.info(f"Exporting to GIF: {gif_name} ...")
-            run_capture(html_name, gif_name, args.duration)
-            logging.info(f"GIF export completed: {gif_name}")
+            # Run capture process (this will create both GIF and PNG)
+            if not args.no_png:
+                print("🎬 Step 5/5: Generating visual outputs...")
+                run_capture(html_file, gif_file, args.duration, args.no_png)
+                if not args.no_png:
+                    print(f"✅ Created PNG preview: {os.path.basename(png_file)}")
+                if gif_file is not None:
+                    print(f"✅ Created GIF animation: {os.path.basename(gif_file)}")
+
+            print("🎉 Conversion completed successfully!")
 
     except Exception as e:
-        logging.error(f"Error: {e}")
+        print(f"\n❌ Error during conversion: {e}")
+        logging.error(f"Error during conversion: {e}")
         sys.exit(1)
+    finally:
+        # Always clean up temporary files
+        cleanup_temp_files()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

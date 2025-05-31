@@ -1,0 +1,2 @@
+2025-05-30 22:16:23,973 - INFO - 🔍 DEBUG: Arguments: no_gif=False, no_svg=False, no_html=False, no_png=True, html_to_gif=True
+2025-05-30 22:16:23,973 - INFO - 🔍 DEBUG: HTML-to-GIF mode - html=../thr/sawtooth/sawtooth.html, gif=../thr/sawtooth/sawtooth.gif, png=../thr/sawtooth/sawtooth.png
